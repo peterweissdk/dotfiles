@@ -1,0 +1,69 @@
+#!/bin/bash
+
+# --- Formatting Helpers ---
+BOLD='\033[1m'
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+echo -e "${BLUE}${BOLD}🚀 Starting Terminal Health Check...${NC}\n"
+
+# --- 1. ZSH & Oh My Zsh ---
+echo -e "${BOLD}1. ZSH & Oh My Zsh${NC}"
+if command -v zsh >/dev/null 2>&1; then
+    echo -e "  ${GREEN}✔${NC} ZSH is installed."
+else
+    echo -e "  ${RED}✘ ZSH is MISSING${NC}"
+    echo -e "    👉 Guide: ${YELLOW}sudo apt install zsh${NC}"
+fi
+
+if [ -d "$HOME/.oh-my-zsh" ]; then
+    echo -e "  ${GREEN}✔${NC} Oh My Zsh is installed."
+else
+    echo -e "  ${RED}✘ Oh My Zsh is MISSING${NC}"
+    echo -e "    👉 Guide: ${YELLOW}sh -c \"\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\"${NC}"
+fi
+
+echo ""
+
+# --- 2. Starship Prompt ---
+echo -e "${BOLD}2. Starship Prompt${NC}"
+if command -v starship >/dev/null 2>&1; then
+    echo -e "  ${GREEN}✔${NC} Starship is installed. ($(starship --version | head -n 1))"
+else
+    echo -e "  ${RED}✘ Starship is MISSING${NC}"
+    echo -e "    👉 Guide: ${YELLOW}curl -sS https://starship.rs/install.sh | sh -s -- -y${NC}"
+fi
+
+echo ""
+
+# --- 3. Plugins ---
+echo -e "${BOLD}3. Plugins${NC}"
+PLUG_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins"
+
+check_plugin() {
+    local name=$1
+    local url=$2
+    if [ -d "$PLUG_DIR/$name" ]; then
+        echo -e "  ${GREEN}✔${NC} Plugin $name is installed."
+    else
+        echo -e "  ${RED}✘ Plugin $name is MISSING${NC}"
+        echo -e "    👉 Guide: ${YELLOW}git clone $url \$ZSH_CUSTOM/plugins/$name${NC}"
+    fi
+}
+
+check_plugin "zsh-syntax-highlighting" "https://github.com/zsh-users/zsh-syntax-highlighting.git"
+check_plugin "zsh-autosuggestions" "https://github.com/zsh-users/zsh-autosuggestions"
+check_plugin "zsh-history-substring-search" "https://github.com/zsh-users/zsh-history-substring-search"
+
+echo ""
+
+# --- 4. Fonts ---
+echo -e "${BOLD}4. Fonts${NC}"
+# Note: It is very hard to detect if a specific Font is 'active' in a terminal via script,
+# so we provide this as a permanent reminder.
+echo -e "  ${BLUE}ℹ${NC} Reminder: Ensure ${BOLD}JetBrainsMono Nerd Font${NC} is installed and selected in your terminal settings."
+
+echo -e "\n${BLUE}${BOLD}--- Check Complete ---${NC}"
