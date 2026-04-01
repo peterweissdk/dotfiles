@@ -16,7 +16,7 @@ if command -v zsh >/dev/null 2>&1; then
     echo -e "  ${GREEN}✔${NC} ZSH is installed."
 else
     echo -e "  ${RED}✘ ZSH is MISSING${NC}"
-    echo -e "    👉 Guide: ${YELLOW}sudo apt install zsh${NC}"
+    echo -e "    👉 Guide: ${YELLOW}sudo apt install zsh or sudo pacman -S yadm${NC}"
 fi
 
 if [ -d "$HOME/.oh-my-zsh" ]; then
