@@ -16,7 +16,7 @@ if command -v zsh >/dev/null 2>&1; then
     echo -e "  ${GREEN}✔${NC} ZSH is installed."
 else
     echo -e "  ${RED}✘ ZSH is MISSING${NC}"
-    echo -e "    👉 Guide: ${YELLOW}sudo apt install zsh or sudo pacman -S yadm${NC}"
+    echo -e "    👉 Guide: ${YELLOW}sudo apt install zsh${NC}"
 fi
 
 if [ -d "$HOME/.oh-my-zsh" ]; then
@@ -60,10 +60,31 @@ check_plugin "zsh-history-substring-search" "https://github.com/zsh-users/zsh-hi
 
 echo ""
 
-# --- 4. Fonts ---
-echo -e "${BOLD}4. Fonts${NC}"
-# Note: It is very hard to detect if a specific Font is 'active' in a terminal via script,
-# so we provide this as a permanent reminder.
-echo -e "  ${BLUE}ℹ${NC} Reminder: Ensure ${BOLD}JetBrainsMono Nerd Font${NC} is installed and selected in your terminal settings."
+# --- 4. Fonts (Nerd Fonts via getnf) ---
+echo -e "${BOLD}4. Nerd Fonts${NC}"
 
-echo -e "\n${BLUE}${BOLD}--- Check Complete ---${NC}"
+# Define the explicit path
+GETNF_PATH="$HOME/.local/bin/getnf"
+
+if [ -f "$GETNF_PATH" ]; then
+    echo -e "  ${GREEN}✔${NC} getnf found at $GETNF_PATH"
+    # Optional: Run it if you want to ensure fonts are updated
+    read -p "  ❓ Would you like to run getnf now to install/update fonts? (y/n) " -n 1 -r
+    echo ""
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        $GETNF_PATH
+    fi
+else
+    read -p "  ❓ getnf not found. Would you like to install it? (y/n) " -n 1 -r
+    echo ""
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo -e "  ${BLUE}⏳ Cloning and installing getnf...${NC}"
+        # Create temp dir, clone, install, then cleanup
+        git clone --depth 1 https://github.com/getnf/getnf.git /tmp/getnf
+        cd /tmp/getnf && ./install.sh
+        echo -e "  ${GREEN}✔${NC} getnf installed to $GETNF_PATH"
+        $GETNF_PATH
+    else
+        echo -e "  ${YELLOW}⚠ Skipping font installation.${NC}"
+    fi
+fi
