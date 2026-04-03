@@ -31,7 +31,7 @@ palette = "catppuccin_mocha"
 
 [directory]
 style = "sky"
-format = "[ $path ]($style)"
+format = "[$path ]($style)"
 truncation_length = 4
 
 [directory.substitutions]
@@ -46,16 +46,16 @@ truncation_length = 4
 
 [sudo]
 disabled = false
-symbol = " "
-format = "[$symbol]($style)"
-style = "bold fg:red"
+symbol = ""
+format = "[$symbol ]($style)"
+style = "bold fg:peach"
 
 [username]
 disabled = false
 show_always = true
 style_user = "bg:surface0 fg:text"
 style_root = "bg:surface0 fg:red"
-format = " [$user]($style) "
+format = "[$user]($style) "
 
 [line_break] 
 disabled = false
@@ -151,7 +151,7 @@ AlmaLinux = " "
 Amazon = " "
 Android = " "
 AOSC = " "
-Arch = "[](bold blue)"
+Arch = "[](bold blue) "
 Artix = " "
 CachyOS = " "
 CentOS = " "
