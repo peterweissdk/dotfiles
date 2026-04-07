@@ -8,7 +8,14 @@ YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}${BOLD}🚀 Starting Terminal Health Check...${NC}\n"
+echo -e "${BLUE}${BOLD}🚀 Starting Terminal Health Check...${NC}"
+
+# --- 0. Environment Detection ---
+IS_WSL=false
+if grep -qi microsoft /proc/version; then
+    IS_WSL=true
+    echo -e "${BLUE}ℹ Detected WSL Environment${NC}\n"
+fi
 
 # --- 1. ZSH & Oh My Zsh ---
 echo -e "${BOLD}1. ZSH & Oh My Zsh${NC}"
@@ -16,7 +23,7 @@ if command -v zsh >/dev/null 2>&1; then
     echo -e "  ${GREEN}✔${NC} ZSH is installed."
 else
     echo -e "  ${RED}✘ ZSH is MISSING${NC}"
-    echo -e "    👉 Guide: ${YELLOW}sudo apt install zsh or sudo pacman -S yadm${NC}"
+    echo -e "    👉 Guide: ${YELLOW}sudo apt install zsh${NC}"
 fi
 
 if [ -d "$HOME/.oh-my-zsh" ]; then
@@ -26,6 +33,26 @@ else
     echo -e "    👉 Guide: ${YELLOW}sh -c \"\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\"${NC}"
 fi
 
+# --- 1.5 ZSH Theme Check (Conflict Prevention) ---
+ZSHRC="$HOME/.zshrc"
+if [ -f "$ZSHRC" ]; then
+    # Extract active theme (ignoring commented lines)
+    CURRENT_THEME=$(grep "^ZSH_THEME=" "$ZSHRC" | cut -d'"' -f2)
+
+    if [ -n "$CURRENT_THEME" ]; then
+        echo -e "\n  ${YELLOW}⚠ Conflict Check: ZSH theme is set to \"$CURRENT_THEME\"${NC}"
+        echo -e "    Note: Starship works best when ZSH_THEME=\"\""
+        read -p "    ❓ Disable current theme? (y/n) " -n 1 -r
+        echo ""
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            # GNU sed compatible with WSL/Linux
+            sed -i 's/^ZSH_THEME=.*/ZSH_THEME=""/' "$ZSHRC"
+            echo -e "  ${GREEN}✔${NC} Theme disabled in .zshrc."
+        else
+            echo -e "  ${BLUE}ℹ${NC} Keeping current theme."
+        fi
+    fi
+fi
 echo ""
 
 # --- 2. Starship Prompt ---
@@ -36,7 +63,6 @@ else
     echo -e "  ${RED}✘ Starship is MISSING${NC}"
     echo -e "    👉 Guide: ${YELLOW}curl -sS https://starship.rs/install.sh | sh -s -- -y${NC}"
 fi
-
 echo ""
 
 # --- 3. Plugins ---
@@ -57,13 +83,35 @@ check_plugin() {
 check_plugin "zsh-syntax-highlighting" "https://github.com/zsh-users/zsh-syntax-highlighting.git"
 check_plugin "zsh-autosuggestions" "https://github.com/zsh-users/zsh-autosuggestions"
 check_plugin "zsh-history-substring-search" "https://github.com/zsh-users/zsh-history-substring-search"
-
 echo ""
 
-# --- 4. Fonts ---
-echo -e "${BOLD}4. Fonts${NC}"
-# Note: It is very hard to detect if a specific Font is 'active' in a terminal via script,
-# so we provide this as a permanent reminder.
-echo -e "  ${BLUE}ℹ${NC} Reminder: Ensure ${BOLD}JetBrainsMono Nerd Font${NC} is installed and selected in your terminal settings."
+# --- 4. Fonts (Nerd Fonts via getnf) ---
+echo -e "${BOLD}4. Nerd Fonts${NC}"
+GETNF_PATH="$HOME/.local/bin/getnf"
 
-echo -e "\n${BLUE}${BOLD}--- Check Complete ---${NC}"
+if [ "$IS_WSL" = true ]; then
+    echo -e "  ${YELLOW}ℹ WSL Reminder: Install Nerd Fonts on WINDOWS (the host) to see icons.${NC}"
+fi
+
+if [ -f "$GETNF_PATH" ]; then
+    echo -e "  ${GREEN}✔${NC} getnf found at $GETNF_PATH"
+    read -p "  ❓ Run getnf now to manage fonts? (y/n) " -n 1 -r
+    echo ""
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        $GETNF_PATH
+    fi
+else
+    read -p "  ❓ getnf not found. Would you like to install it? (y/n) " -n 1 -r
+    echo ""
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo -e "  ${BLUE}⏳ Installing getnf...${NC}"
+        git clone --depth 1 https://github.com/getnf/getnf.git /tmp/getnf
+        cd /tmp/getnf && ./install.sh
+        echo -e "  ${GREEN}✔${NC} getnf installed."
+        $GETNF_PATH
+    else
+        echo -e "  ${YELLOW}⚠ Skipping font installation tool.${NC}"
+    fi
+fi
+
+echo -e "\n${BLUE}${BOLD}✨ Health Check Complete!${NC}"
