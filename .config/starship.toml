@@ -9,6 +9,7 @@ add_newline = false
 format = """
 $os\
 $username\
+$hostname\
 $directory\
 ${custom.giturl}\
 $git_branch\
@@ -43,6 +44,12 @@ truncation_length = 4
 "Projects" = "󰲋 "
 "Git" = "󰊢 "
 "Others" = " "
+
+[hostname]
+ssh_only = true
+disabled = false
+format = "[󰌘 @ $hostname]($style) "
+style = "bold peach"
 
 [sudo]
 disabled = false
@@ -242,6 +249,9 @@ style = "blue bold"
 # Notice we removed $output here so the word 'default' is hidden
 format = "[$symbol]($style) "
 symbol = "󰡨 "
+
+[gcloud]
+disabled = true
 
 [palettes.catppuccin_mocha]
 # --- background ---
