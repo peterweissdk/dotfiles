@@ -8,6 +8,8 @@ YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+ZSHRC="$HOME/.zshrc"
+
 echo -e "${BLUE}${BOLD}🚀 Starting Terminal Health Check...${NC}"
 
 # --- 0. Environment Detection ---
@@ -19,8 +21,10 @@ fi
 
 # --- 1. ZSH & Oh My Zsh ---
 echo -e "${BOLD}1. ZSH & Oh My Zsh${NC}"
+ZSH_INSTALLED=false
 if command -v zsh >/dev/null 2>&1; then
     echo -e "  ${GREEN}✔${NC} ZSH is installed."
+    ZSH_INSTALLED=true
 else
     echo -e "  ${RED}✘ ZSH is MISSING${NC}"
     echo -e "    👉 Guide: ${YELLOW}sudo apt install zsh${NC}"
@@ -33,23 +37,16 @@ else
     echo -e "    👉 Guide: ${YELLOW}sh -c \"\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\"${NC}"
 fi
 
-# --- 1.5 ZSH Theme Check (Conflict Prevention) ---
-ZSHRC="$HOME/.zshrc"
+# --- 1.5 ZSH Theme Check ---
 if [ -f "$ZSHRC" ]; then
-    # Extract active theme (ignoring commented lines)
     CURRENT_THEME=$(grep "^ZSH_THEME=" "$ZSHRC" | cut -d'"' -f2)
-
-    if [ -n "$CURRENT_THEME" ]; then
+    if [ -n "$CURRENT_THEME" ] && [ "$CURRENT_THEME" != "" ]; then
         echo -e "\n  ${YELLOW}⚠ Conflict Check: ZSH theme is set to \"$CURRENT_THEME\"${NC}"
-        echo -e "    Note: Starship works best when ZSH_THEME=\"\""
-        read -p "    ❓ Disable current theme? (y/n) " -n 1 -r
+        read -p "    ❓ Disable current theme for Starship compatibility? (y/n) " -n 1 -r
         echo ""
         if [[ $REPLY =~ ^[Yy]$ ]]; then
-            # GNU sed compatible with WSL/Linux
             sed -i 's/^ZSH_THEME=.*/ZSH_THEME=""/' "$ZSHRC"
-            echo -e "  ${GREEN}✔${NC} Theme disabled in .zshrc."
-        else
-            echo -e "  ${BLUE}ℹ${NC} Keeping current theme."
+            echo -e "  ${GREEN}✔${NC} Theme disabled."
         fi
     fi
 fi
@@ -58,16 +55,31 @@ echo ""
 # --- 2. Starship Prompt ---
 echo -e "${BOLD}2. Starship Prompt${NC}"
 if command -v starship >/dev/null 2>&1; then
-    echo -e "  ${GREEN}✔${NC} Starship is installed. ($(starship --version | head -n 1))"
+    echo -e "  ${GREEN}✔${NC} Starship is installed."
 else
     echo -e "  ${RED}✘ Starship is MISSING${NC}"
-    echo -e "    👉 Guide: ${YELLOW}curl -sS https://starship.rs/install.sh | sh -s -- -y${NC}"
+    read -p "    ❓ Install Starship now? (y/n) " -n 1 -r
+    echo ""
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        curl -sS https://starship.rs/install.sh | sh -s -- -y
+    else
+        echo -e "    👉 Manual Guide: ${YELLOW}curl -sS https://starship.rs/install.sh | sh${NC}"
+    fi
+fi
+
+# Add to .zshrc if installed
+if command -v starship >/dev/null 2>&1 && [ "$ZSH_INSTALLED" = true ]; then
+    if ! grep -q "starship init zsh" "$ZSHRC"; then
+        echo -e "  ${BLUE}⏳ Adding Starship init to .zshrc...${NC}"
+        echo 'eval "$(starship init zsh)"' >> "$ZSHRC"
+    fi
 fi
 echo ""
 
 # --- 3. Plugins ---
 echo -e "${BOLD}3. Plugins${NC}"
 PLUG_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins"
+MISSING_PLUGINS=()
 
 check_plugin() {
     local name=$1
@@ -76,13 +88,39 @@ check_plugin() {
         echo -e "  ${GREEN}✔${NC} Plugin $name is installed."
     else
         echo -e "  ${RED}✘ Plugin $name is MISSING${NC}"
-        echo -e "    👉 Guide: ${YELLOW}git clone $url \$ZSH_CUSTOM/plugins/$name${NC}"
+        MISSING_PLUGINS+=("$name|$url")
     fi
 }
 
 check_plugin "zsh-syntax-highlighting" "https://github.com/zsh-users/zsh-syntax-highlighting.git"
 check_plugin "zsh-autosuggestions" "https://github.com/zsh-users/zsh-autosuggestions"
 check_plugin "zsh-history-substring-search" "https://github.com/zsh-users/zsh-history-substring-search"
+
+if [ ${#MISSING_PLUGINS[@]} -gt 0 ]; then
+    read -p "  ❓ Install missing plugins? (y/n) " -n 1 -r
+    echo ""
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        for plug_info in "${MISSING_PLUGINS[@]}"; do
+            name=$(echo $plug_info | cut -d'|' -f1)
+            url=$(echo $plug_info | cut -d'|' -f2)
+            echo -e "    ⏳ Cloning $name..."
+            git clone --depth 1 "$url" "$PLUG_DIR/$name"
+        done
+    else
+        echo -e "    👉 Manual Guide: ${YELLOW}git clone [URL] \$ZSH_CUSTOM/plugins/[NAME]${NC}"
+    fi
+fi
+
+# Add plugins to .zshrc config line if ZSH is present
+if [ "$ZSH_INSTALLED" = true ] && [ -f "$ZSHRC" ]; then
+    # This logic checks if plugins are in the plugins=(...) list in .zshrc
+    for plug_info in "zsh-syntax-highlighting" "zsh-autosuggestions" "zsh-history-substring-search"; do
+        if ! grep -qP "^plugins=\(.*\b$plug_info\b.*\)" "$ZSHRC"; then
+             echo -e "  ${YELLOW}ℹ $plug_info not found in .zshrc plugins list.${NC}"
+             echo -e "    👉 Please add it manually to the ${BOLD}plugins=(...)${NC} section."
+        fi
+    done
+fi
 echo ""
 
 # --- 4. Fonts (Nerd Fonts via getnf) ---
@@ -94,23 +132,17 @@ if [ "$IS_WSL" = true ]; then
 fi
 
 if [ -f "$GETNF_PATH" ]; then
-    echo -e "  ${GREEN}✔${NC} getnf found at $GETNF_PATH"
-    read -p "  ❓ Run getnf now to manage fonts? (y/n) " -n 1 -r
+    echo -e "  ${GREEN}✔${NC} getnf found."
+    read -p "    ❓ Run getnf now? (y/n) " -n 1 -r
     echo ""
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        $GETNF_PATH
-    fi
+    if [[ $REPLY =~ ^[Yy]$ ]]; then $GETNF_PATH; fi
 else
-    read -p "  ❓ getnf not found. Would you like to install it? (y/n) " -n 1 -r
+    read -p "    ❓ Install getnf? (y/n) " -n 1 -r
     echo ""
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo -e "  ${BLUE}⏳ Installing getnf...${NC}"
         git clone --depth 1 https://github.com/getnf/getnf.git /tmp/getnf
         cd /tmp/getnf && ./install.sh
-        echo -e "  ${GREEN}✔${NC} getnf installed."
         $GETNF_PATH
-    else
-        echo -e "  ${YELLOW}⚠ Skipping font installation tool.${NC}"
     fi
 fi
 
