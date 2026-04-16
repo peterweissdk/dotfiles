@@ -21,36 +21,30 @@ fi
 
 # --- 1. ZSH & Oh My Zsh ---
 echo -e "${BOLD}1. ZSH & Oh My Zsh${NC}"
-ZSH_INSTALLED=false
+
+# Check for ZSH
 if command -v zsh >/dev/null 2>&1; then
     echo -e "  ${GREEN}✔${NC} ZSH is installed."
     ZSH_INSTALLED=true
 else
     echo -e "  ${RED}✘ ZSH is MISSING${NC}"
-    echo -e "    👉 Guide: ${YELLOW}sudo apt install zsh${NC}"
+    echo -e "\n${YELLOW}STOPPING BOOTSTRAP:${NC} ZSH is required to continue."
+    echo -e "👉 Install it using: ${BOLD}sudo apt install zsh${NC}"
+    echo -e "Then, run this bootstrap script again."
+    exit 1
 fi
 
+# Check for Oh My Zsh
 if [ -d "$HOME/.oh-my-zsh" ]; then
     echo -e "  ${GREEN}✔${NC} Oh My Zsh is installed."
 else
     echo -e "  ${RED}✘ Oh My Zsh is MISSING${NC}"
-    echo -e "    👉 Guide: ${YELLOW}sh -c \"\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\"${NC}"
+    echo -e "\n${YELLOW}STOPPING BOOTSTRAP:${NC} Oh My Zsh is required for plugin management."
+    echo -e "👉 Install it using:"
+    echo -e "${BLUE}sh -c \"\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\"${NC}"
+    echo -e "\nAfter installation, re-run this bootstrap script."
+    exit 1
 fi
-
-# --- 1.5 ZSH Theme Check ---
-if [ -f "$ZSHRC" ]; then
-    CURRENT_THEME=$(grep "^ZSH_THEME=" "$ZSHRC" | cut -d'"' -f2)
-    if [ -n "$CURRENT_THEME" ] && [ "$CURRENT_THEME" != "" ]; then
-        echo -e "\n  ${YELLOW}⚠ Conflict Check: ZSH theme is set to \"$CURRENT_THEME\"${NC}"
-        read -p "    ❓ Disable current theme for Starship compatibility? (y/n) " -n 1 -r
-        echo ""
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            sed -i 's/^ZSH_THEME=.*/ZSH_THEME=""/' "$ZSHRC"
-            echo -e "  ${GREEN}✔${NC} Theme disabled."
-        fi
-    fi
-fi
-echo ""
 
 # --- 2. Starship Prompt ---
 echo -e "${BOLD}2. Starship Prompt${NC}"
@@ -146,4 +140,4 @@ else
     fi
 fi
 
-echo -e "\n${BLUE}${BOLD}✨ Health Check Complete!${NC}"
+echo -e "\n${BLUE}${BOLD}✨ YADM Bootstrap Setup Complete!${NC}"
