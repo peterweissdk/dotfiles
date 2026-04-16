@@ -55,7 +55,7 @@ style = "bold peach"
 disabled = false
 symbol = ""
 format = "[$symbol ]($style)"
-style = "bold fg:peach"
+style = "bold fg:red"
 
 [username]
 disabled = false
@@ -252,6 +252,11 @@ symbol = "󰡨 "
 
 [gcloud]
 disabled = true
+
+[container]
+disabled = false
+format = "[  Container OS detected]($style) "
+style = "bold red"
 
 [palettes.catppuccin_mocha]
 # --- background ---
