@@ -10,7 +10,10 @@ NC='\033[0m' # No Color
 
 ZSHRC="$HOME/.zshrc"
 
-echo -e "${BLUE}${BOLD}🚀 Starting Terminal Health Check...${NC}"
+
+echo -e "\n${BLUE}${BOLD}🚀 Starting YADM Bootstrap Setup...${NC}"
+echo -e "\n${YELLOW}${BOLD}💡 Compatible with Debian based OS !${NC}"
+echo
 
 # --- 0. Environment Detection ---
 IS_WSL=false
@@ -141,3 +144,4 @@ else
 fi
 
 echo -e "\n${BLUE}${BOLD}✨ YADM Bootstrap Setup Complete!${NC}"
+echo
